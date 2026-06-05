@@ -119,10 +119,11 @@ jobs:
             }
 
             if (-not (Test-Path "sdktools\\nuget.exe")) {
-              Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile "sdktools\\nuget.exe"
+              $ProgressPreference = 'SilentlyContinue'
+              Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile "sdktools\\nuget.exe" | Out-Null
             }
 
-            & "sdktools\\nuget.exe" install Microsoft.Windows.SDK.BuildTools -OutputDirectory sdktools -NonInteractive
+            $null = & "sdktools\\nuget.exe" install Microsoft.Windows.SDK.BuildTools -OutputDirectory sdktools -NonInteractive
 
             $candidate = Get-ChildItem -Path "sdktools" -Recurse -Filter makeappx.exe -ErrorAction SilentlyContinue |
               Where-Object { $_.FullName -match "\\\\x64\\\\.*makeappx\\.exe$" } |
@@ -155,10 +156,11 @@ jobs:
             }
 
             if (-not (Test-Path "sdktools\\nuget.exe")) {
-              Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile "sdktools\\nuget.exe"
+              $ProgressPreference = 'SilentlyContinue'
+              Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile "sdktools\\nuget.exe" | Out-Null
             }
 
-            & "sdktools\\nuget.exe" install Microsoft.Windows.SDK.BuildTools -OutputDirectory sdktools -NonInteractive
+            $null = & "sdktools\\nuget.exe" install Microsoft.Windows.SDK.BuildTools -OutputDirectory sdktools -NonInteractive
 
             $candidate = Get-ChildItem -Path "sdktools" -Recurse -Filter signtool.exe -ErrorAction SilentlyContinue |
               Where-Object { $_.FullName -match "\\\\x64\\\\.*signtool\\.exe$" } |
