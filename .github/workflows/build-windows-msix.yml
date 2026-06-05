@@ -107,15 +107,31 @@ jobs:
       - name: Pack MSIX
         shell: pwsh
         run: |
-          # MakeAppx is available on windows-latest runners.
-          MakeAppx pack /d msix /p anonymyseur.msix /o
+          $makeappx = Get-ChildItem -Path "C:\\Program Files (x86)\\Windows Kits\\10\\bin" -Recurse -Filter makeappx.exe -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match "\\\\x64\\\\makeappx\\.exe$" } |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+
+          if (-not $makeappx) {
+            throw "makeappx.exe not found on runner"
+          }
+
+          & $makeappx.FullName pack /d msix /p anonymyseur.msix /o
 
       - name: Sign MSIX
         shell: pwsh
         run: |
           $pwd = ConvertTo-SecureString -String "password" -Force -AsPlainText
-          # Use signtool from Windows SDK.
-          signtool sign /fd SHA256 /f signingCert.pfx /p password anonymyseur.msix
+          $signtool = Get-ChildItem -Path "C:\\Program Files (x86)\\Windows Kits\\10\\bin" -Recurse -Filter signtool.exe -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match "\\\\x64\\\\signtool\\.exe$" } |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+
+          if (-not $signtool) {
+            throw "signtool.exe not found on runner"
+          }
+
+          & $signtool.FullName sign /fd SHA256 /f signingCert.pfx /p password anonymyseur.msix
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
