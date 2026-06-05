@@ -107,31 +107,73 @@ jobs:
       - name: Pack MSIX
         shell: pwsh
         run: |
-          $makeappx = Get-ChildItem -Path "C:\\Program Files (x86)\\Windows Kits\\10\\bin" -Recurse -Filter makeappx.exe -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -match "\\\\x64\\\\makeappx\\.exe$" } |
-            Sort-Object FullName -Descending |
-            Select-Object -First 1
+          function Get-MakeAppxPath {
+            $candidate = Get-ChildItem -Path "C:\\Program Files (x86)\\Windows Kits\\10\\bin" -Recurse -Filter makeappx.exe -ErrorAction SilentlyContinue |
+              Where-Object { $_.FullName -match "\\\\x64\\\\.*makeappx\\.exe$" } |
+              Sort-Object FullName -Descending |
+              Select-Object -First 1
+            if ($candidate) { return $candidate.FullName }
 
-          if (-not $makeappx) {
-            throw "makeappx.exe not found on runner"
+            if (-not (Test-Path "sdktools")) {
+              New-Item -ItemType Directory -Force -Path sdktools | Out-Null
+            }
+
+            if (-not (Test-Path "sdktools\\nuget.exe")) {
+              Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile "sdktools\\nuget.exe"
+            }
+
+            & "sdktools\\nuget.exe" install Microsoft.Windows.SDK.BuildTools -OutputDirectory sdktools -NonInteractive
+
+            $candidate = Get-ChildItem -Path "sdktools" -Recurse -Filter makeappx.exe -ErrorAction SilentlyContinue |
+              Where-Object { $_.FullName -match "\\\\x64\\\\.*makeappx\\.exe$" } |
+              Sort-Object FullName -Descending |
+              Select-Object -First 1
+            if ($candidate) { return $candidate.FullName }
+            return $null
           }
 
-          & $makeappx.FullName pack /d msix /p anonymyseur.msix /o
+          $makeappxPath = Get-MakeAppxPath
+          if (-not $makeappxPath) {
+            throw "makeappx.exe not found on runner (Windows Kits missing and NuGet fallback failed)"
+          }
+
+          & $makeappxPath pack /d msix /p anonymyseur.msix /o
 
       - name: Sign MSIX
         shell: pwsh
         run: |
           $pwd = ConvertTo-SecureString -String "password" -Force -AsPlainText
-          $signtool = Get-ChildItem -Path "C:\\Program Files (x86)\\Windows Kits\\10\\bin" -Recurse -Filter signtool.exe -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -match "\\\\x64\\\\signtool\\.exe$" } |
-            Sort-Object FullName -Descending |
-            Select-Object -First 1
+          function Get-SignToolPath {
+            $candidate = Get-ChildItem -Path "C:\\Program Files (x86)\\Windows Kits\\10\\bin" -Recurse -Filter signtool.exe -ErrorAction SilentlyContinue |
+              Where-Object { $_.FullName -match "\\\\x64\\\\.*signtool\\.exe$" } |
+              Sort-Object FullName -Descending |
+              Select-Object -First 1
+            if ($candidate) { return $candidate.FullName }
 
-          if (-not $signtool) {
-            throw "signtool.exe not found on runner"
+            if (-not (Test-Path "sdktools")) {
+              New-Item -ItemType Directory -Force -Path sdktools | Out-Null
+            }
+
+            if (-not (Test-Path "sdktools\\nuget.exe")) {
+              Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile "sdktools\\nuget.exe"
+            }
+
+            & "sdktools\\nuget.exe" install Microsoft.Windows.SDK.BuildTools -OutputDirectory sdktools -NonInteractive
+
+            $candidate = Get-ChildItem -Path "sdktools" -Recurse -Filter signtool.exe -ErrorAction SilentlyContinue |
+              Where-Object { $_.FullName -match "\\\\x64\\\\.*signtool\\.exe$" } |
+              Sort-Object FullName -Descending |
+              Select-Object -First 1
+            if ($candidate) { return $candidate.FullName }
+            return $null
           }
 
-          & $signtool.FullName sign /fd SHA256 /f signingCert.pfx /p password anonymyseur.msix
+          $signtoolPath = Get-SignToolPath
+          if (-not $signtoolPath) {
+            throw "signtool.exe not found on runner (Windows Kits missing and NuGet fallback failed)"
+          }
+
+          & $signtoolPath sign /fd SHA256 /f signingCert.pfx /p password anonymyseur.msix
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
