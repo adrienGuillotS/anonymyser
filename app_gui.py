@@ -1,8 +1,18 @@
 import threading
+import sys
+from pathlib import Path
+
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    base_dir = Path(sys._MEIPASS)  # type: ignore[attr-defined]
+else:
+    base_dir = Path(__file__).resolve().parent
+
+if str(base_dir) not in sys.path:
+    sys.path.insert(0, str(base_dir))
+
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter import ttk
-from pathlib import Path
 
 import fitz  # PyMuPDF
 
