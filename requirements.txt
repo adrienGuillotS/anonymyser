@@ -4,7 +4,7 @@ presidio-anonymizer
 spacy
 pymupdf
 python-docx
+customtkinter
+pillow
+pytesseract
 
-# spaCy FR model (install separately if pip fails):
-# python -m spacy download fr_core_news_lg
-fr-core-news-lg
