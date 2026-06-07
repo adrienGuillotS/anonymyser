@@ -30,10 +30,14 @@ jobs:
 
       - name: Build app
         run: |
-          pyinstaller --noconfirm --windowed --name anonymyseur --hidden-import fitz --collect-all pymupdf app_ctk.py
+          pyinstaller --noconfirm --onefile --windowed --name anonymyseur --hidden-import fitz --collect-all pymupdf app_ctk.py
+
+      - name: Package binary
+        run: |
+          ditto -c -k --sequesterRsrc dist/anonymyseur dist/anonymyseur-macos-onefile.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: anonymyseur-macos
-          path: dist/anonymyseur.app
+          path: dist/anonymyseur-macos-onefile.zip

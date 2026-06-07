@@ -7,4 +7,4 @@ python-docx
 customtkinter
 pillow
 pytesseract
-
+click
