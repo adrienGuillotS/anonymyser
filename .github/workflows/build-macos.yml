@@ -1,4 +1,4 @@
-name: Build Windows exe
+name: Build macOS app
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  build-macos:
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -21,15 +21,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pymupdf
           pip install pyinstaller
 
-      - name: Build exe
+      - name: Build app
         run: |
-          pyinstaller --noconfirm --onefile --name anonymyseur --hidden-import fitz --collect-all pymupdf app_ctk.py
+          pyinstaller --noconfirm --windowed --name anonymyseur --hidden-import fitz --collect-all pymupdf app_ctk.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: anonymyseur-windows
-          path: dist/anonymyseur.exe
+          name: anonymyseur-macos
+          path: dist/anonymyseur.app
